@@ -1,20 +1,26 @@
 Ext.define('CustomApp', {
     extend: 'Rally.app.App',
     componentCls: 'app',
+    numberOfWeeks : 8,
     weeks : [],
+    createdDefects:[],
     eightWeeksData : [],
+    eightWeeksTTRData : [],
     arrayOfCreationDateFilters : [],
     arrayOfFixedFilters : [],
     arrayOfAdminClosedFilters : [],
+    defectStore : null,
     launch: function() {
         this.getDates();
-        this.createFilters();    
+        this.createFilters();
+        this.makeStore();
+        
     },
     getDates:function(){
         var now = new Date(),
             today = now.getDay(),
             friday = 5,
-            howFarBack = 9,
+            howFarBack = this.numberOfWeeks + 1,
             fridayDates = [],
             weeks = [],
             closestFriday = null,
@@ -37,7 +43,6 @@ Ext.define('CustomApp', {
             week['start'] = fridayDates[i+1];
             this.weeks.push(week);
         }
-        //console.log(weeks);
     },
     createFilters:function(){
         console.log(this.weeks);
@@ -49,7 +54,6 @@ Ext.define('CustomApp', {
         var adminClosedFilter;
         var closedDateFilters = [];
         var creationDateFilters = [];
-        
         
         tagFilter = Ext.create('Rally.data.wsapi.Filter', {
              property : 'Tags.Name',
@@ -95,8 +99,6 @@ Ext.define('CustomApp', {
         ]);
         fixedFilter = closedFilter.and(codeResolitionFilter);
         adminClosedFilter = closedFilter.and(adminResolutionFilter);
-        //console.log(fixedFilter.toString());
-        //console.log(adminClosedFilter.toString());
         
         _.each(this.weeks, function(week){
             var creationDateFilter = Rally.data.wsapi.Filter.and([
@@ -130,6 +132,7 @@ Ext.define('CustomApp', {
             this.arrayOfAdminClosedFilters.push(adminClosedFilter.and(closedDateFilter));
         },this);
         
+        
         console.log('-----CreationDate Filters-----');
         _.each(this.arrayOfCreationDateFilters, function(filter){
             console.log(filter.toString());
@@ -142,6 +145,89 @@ Ext.define('CustomApp', {
         _.each(this.arrayOfAdminClosedFilters, function(filter){
             console.log(filter.toString());
         },this);
+        
+    },
+    makeStore:function(){
+        this.concatArrayOfFilters = this.arrayOfCreationDateFilters.concat(
+            this.arrayOfFixedFilters,this.arrayOfAdminClosedFilters);
+        this.defectStore = Ext.create('Rally.data.wsapi.Store',{
+            model: 'Defect',
+            fetch: ['Name','State','FormattedID','CreationDate','ClosedDate'],
+            limit: Infinity,
+        });
+        this.applyFiltersToStore(0);
+    },
+    applyFiltersToStore:function(i){
+        this.defectStore.addFilter(this.concatArrayOfFilters[i]);
+        this.defectStore.load({
+            scope: this,
+            callback: function(records, operation) {
+                if(operation.wasSuccessful()) {
+                    console.log('records.length',records.length);
+                    this.eightWeeksData.push(records.length);
+                    if (i>=this.numberOfWeeks) {
+                        this.eightWeeksTTRData.push(this.getClosedDefectsWithinTTR(records));
+                    }
+                    this.defectStore.clearFilter(records.length);
+                    if (i < this.concatArrayOfFilters.length-1) {
+                        this.applyFiltersToStore(i + 1);
+                    }
+                    else{
+                        this.eightWeeksData = this.eightWeeksData.concat(this.eightWeeksTTRData);
+                        console.log('eightWeeksData',this.eightWeeksData);
+                        this.makeCustomStore();
+                    }
+                }
+            }
+        });
+    },
+    getClosedDefectsWithinTTR:function(records){
+        var ttr = 20;
+        var closedDefectWithinTTRCount = [];
+        _.each(records, function(record){
+            var created = new Date(record.get('CreationDate'));
+            var closed = new Date(record.get('ClosedDate'));
+            console.log(record.get('FormattedID'));
+            console.log('created',created);
+            console.log('closed',closed);
+            var diff = Math.floor((closed - created)/86400000); 
+            console.log('diff', diff);
+            if (diff <= ttr) {
+                closedDefectWithinTTRCount.push(record);
+            }
+        },this);
+        return closedDefectWithinTTRCount.length;
+    },
+    makeCustomStore:function(){
+        
+        var chunksOfData = []
+        var i,j,k,chunk = this.numberOfWeeks;
+            for (i=0,j=this.eightWeeksData.length,k=0; i<j; i+=chunk,k++) {
+                chunksOfData[k] = this.eightWeeksData.slice(i,i+chunk);
+            }
+            
+        console.log('chunksOfData', chunksOfData);
+        var zippedChunks = _.zip(chunksOfData);
+        console.log('zippedChunks',zippedChunks);
+        
+        
+        
+        //var createdDefects = this.eightWeeksData.splice(0,7);
+        //var fixedDefects = this.eightWeeksData.splice(8,15);
+        //var adminClosedDefects = this.eightWeeksData.splice(16,23);
+        //var fixedDefectsTTR = this.eightWeeksData.splice(24,31);
+        //var adminClosedDefectsTTR = this.eightWeeksData.splice(32,39);
+    
+        
+        //var d = {
+        //    "CreatedDefects" : createdDefects,
+        //    "FixedDefects" : fixedDefects,
+        //    "AdminClosedDefects" : adminClosedDefects,
+        //    "FixedDefectsTTR" : fixedDefectsTTR,
+        //    "AdminClosedDefectsTTR" : adminClosedDefectsTTR
+        //};
+        //
+        //console.log('d', d);
     }
 });
         
