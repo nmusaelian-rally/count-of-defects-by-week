@@ -184,6 +184,7 @@ Ext.define('CustomApp', {
     getClosedDefectsWithinTTR:function(records){
         var ttr = 20;
         var closedDefectWithinTTRCount = [];
+        var arrayOfDataObjects = [];
         _.each(records, function(record){
             var created = new Date(record.get('CreationDate'));
             var closed = new Date(record.get('ClosedDate'));
@@ -199,8 +200,8 @@ Ext.define('CustomApp', {
         return closedDefectWithinTTRCount.length;
     },
     makeCustomStore:function(){
-        
-        var chunksOfData = []
+        var arrayOfObjects = [];
+        var chunksOfData = [];
         var i,j,k,chunk = this.numberOfWeeks;
             for (i=0,j=this.eightWeeksData.length,k=0; i<j; i+=chunk,k++) {
                 chunksOfData[k] = this.eightWeeksData.slice(i,i+chunk);
@@ -211,23 +212,18 @@ Ext.define('CustomApp', {
         console.log('zippedChunks',zippedChunks);
         
         
+        for(var i = 0;i<zippedChunks.length;i++){
+            console.log('i:',i);
+            var o = {};
+            for(var j=0; j<zippedChunks[i].length;j++){
+                o[j] = zippedChunks[i][j];
+            }
+            arrayOfObjects.push(o);
+        }
         
-        //var createdDefects = this.eightWeeksData.splice(0,7);
-        //var fixedDefects = this.eightWeeksData.splice(8,15);
-        //var adminClosedDefects = this.eightWeeksData.splice(16,23);
-        //var fixedDefectsTTR = this.eightWeeksData.splice(24,31);
-        //var adminClosedDefectsTTR = this.eightWeeksData.splice(32,39);
-    
+        console.log('arrayOfObjects', arrayOfObjects);
         
-        //var d = {
-        //    "CreatedDefects" : createdDefects,
-        //    "FixedDefects" : fixedDefects,
-        //    "AdminClosedDefects" : adminClosedDefects,
-        //    "FixedDefectsTTR" : fixedDefectsTTR,
-        //    "AdminClosedDefectsTTR" : adminClosedDefectsTTR
-        //};
-        //
-        //console.log('d', d);
+       
     }
 });
         
