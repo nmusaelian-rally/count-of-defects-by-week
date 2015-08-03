@@ -11,6 +11,8 @@ Ext.define('CustomApp', {
     arrayOfAdminClosedFilters : [],
     defectStore : null,
     launch: function() {
+        this._myMask = new Ext.LoadMask(Ext.getBody(), {msg:"Please wait.This may take long..."});
+        this._myMask.show();
         this.getDates();
         this.createFilters();
         this.makeStore();
@@ -222,8 +224,8 @@ Ext.define('CustomApp', {
         this.makeGrid(arrayOfObjects);
     },
     makeGrid:function(data){
-        console.log(this.weeks);
-       var mergedData = _.merge(data, this.weeks);
+        this._myMask.hide();
+        var mergedData = _.merge(data, this.weeks);
         console.log('mergedData',mergedData);
         
         this._grid = Ext.create('Rally.ui.grid.Grid', {
