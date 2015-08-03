@@ -21,42 +21,23 @@ Ext.define('CustomApp', {
     getDates:function(){
         var now = new Date(),
             today = now.getDay(),
-            //friday = 5,
             saturday = 6,
             howFarBack = this.numberOfWeeks + 1,
-            //fridayDates = [],
             saturdayDates = [],
             weeks = [],
-            //closestFriday = null,
             closestSaturday = null,
-            //prevFriday = null;
             prevSaturday = null;
-        //var daysFromLastFriday = today - friday;
         var daysFromLastSaturday = today - saturday;
-        //closestFriday = new Date(now - daysFromLastFriday*86400000);
-        closestSaturday = new Date(now - daysFromLastSaturday*86400000)
-        //fridayDates.push(Rally.util.DateTime.format(closestFriday, 'Y-m-d'));
+        closestSaturday = new Date(now - daysFromLastSaturday*86400000);
         saturdayDates.push(Rally.util.DateTime.format(closestSaturday, 'Y-m-d'));
-        //console.log('today:', today, 'daysFromLastFriday:',daysFromLastFriday, 'closestFriday:',closestFriday);
         console.log('today:', today, 'daysFromLastSaturday:',daysFromLastSaturday, 'closestSaturday:',closestSaturday);
-        //today: 6 daysFromLastFriday: 1 closestFriday: Fri Jul 31 2015 10:21:01 GMT-0600 (MDT)
         for(var i=1;i<howFarBack;i++){
-            //var prevFriday = new Date(closestFriday - 7*86400000);
-            //fridayDates.push(Rally.util.DateTime.format(prevFriday, 'Y-m-d'));
-            //closestFriday = prevFriday;
             var prevSaturday = new Date(closestSaturday - 7*86400000);
             saturdayDates.push(Rally.util.DateTime.format(prevSaturday, 'Y-m-d'));
             closestSaturday = prevSaturday;
              
         }
-        //console.log('fridayDates:',fridayDates);
         console.log('saturdayDates:',saturdayDates);
-        //for (var i=0; i<fridayDates.length-1; i++) {
-        //    var week = {};
-        //    week['end'] = fridayDates[i];
-        //    week['start'] = fridayDates[i+1];
-        //    this.weeks.push(week);
-        //}
         for (var i=0; i<saturdayDates.length-1; i++) {
             var week = {};
             week['end'] = saturdayDates[i];
@@ -124,12 +105,12 @@ Ext.define('CustomApp', {
             var creationDateFilter = Rally.data.wsapi.Filter.and([
                 {
                     property : 'CreationDate',
-                    operator : '>',
+                    operator : '>=',
                     value : week['start']
                 },
                 {
                     property : 'CreationDate',
-                    operator : '<=',
+                    operator : '<',
                     value : week['end']
                 }
             ]);
@@ -137,12 +118,12 @@ Ext.define('CustomApp', {
             var closedDateFilter = Rally.data.wsapi.Filter.and([
                 {
                     property : 'ClosedDate',
-                    operator : '>',
+                    operator : '>=',
                     value : week['start']
                 },
                 {
                     property : 'ClosedDate',
-                    operator : '<=',
+                    operator : '<',
                     value : week['end']
                 }
             ]);
